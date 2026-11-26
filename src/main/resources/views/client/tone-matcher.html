@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titulo})}"></head>
+<body class="bg-white text-kromaDark antialiased min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: header}"></div>
+
+<main class="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+    <div class="text-center max-w-2xl mx-auto space-y-3 mb-8">
+        <span class="inline-block px-3.5 py-1 rounded-full bg-pink-100 text-kromaPink text-xs font-extrabold uppercase tracking-wider">Asistente Interactivo RF03</span>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-kromaDark">Tone Matcher Kroma</h1>
+        <p class="text-sm text-gray-600">Responde 4 preguntas rápidas para identificar tu subtono y recomendarte los productos <strong>skin-first</strong> perfectos para tu piel.</p>
+    </div>
+
+    <div class="grid lg:grid-cols-12 gap-8 items-start">
+        <form id="formToneMatcher" class="lg:col-span-5 bg-pink-50/50 border border-pink-100 rounded-3xl p-6 space-y-5">
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-kromaDark mb-2">1. ¿Cuál es tu tipo de piel?</label>
+                <select name="tipoPiel" class="w-full rounded-xl border border-pink-200 bg-white px-3.5 py-2.5 text-sm font-semibold">
+                    <option value="Seca">Seca (busca hidratación y brillo saludable)</option>
+                    <option value="Mixta" selected>Mixta (zona T con brillo, mejillas normales)</option>
+                    <option value="Grasa">Grasa (control de brillo sin obstruir poros)</option>
+                    <option value="Sensible">Sensible (fórmulas calmantes no abrasivas)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-kromaDark mb-2">2. ¿De qué color ves las venas de tu muñeca?</label>
+                <div class="space-y-2 text-xs font-semibold">
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-pink-100 cursor-pointer">
+                        <input type="radio" name="colorVenas" value="azuladas" checked class="accent-pink-600"> Azuladas o violáceas
+                    </label>
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-pink-100 cursor-pointer">
+                        <input type="radio" name="colorVenas" value="mixtas" class="accent-pink-600"> Mezcla entre azul y verde
+                    </label>
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-xl bg-white border border-pink-100 cursor-pointer">
+                        <input type="radio" name="colorVenas" value="verdosas" class="accent-pink-600"> Verdosas u oliva
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-kromaDark mb-2">3. ¿Cómo reacciona tu piel al sol?</label>
+                <select name="reaccionSol" class="w-full rounded-xl border border-pink-200 bg-white px-3.5 py-2.5 text-sm font-semibold">
+                    <option value="se_quema">Se enrojece o quema con facilidad</option>
+                    <option value="mixto">Primero se enrojece y luego toma color</option>
+                    <option value="se_broncea">Se broncea dorado fácilmente</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-kromaDark mb-2">4. ¿Qué joyería ilumina más tu rostro?</label>
+                <select name="joyeria" class="w-full rounded-xl border border-pink-200 bg-white px-3.5 py-2.5 text-sm font-semibold">
+                    <option value="plateada">Plateada / Oro blanco</option>
+                    <option value="ambas">Ambas me lucen bien</option>
+                    <option value="dorada">Dorada / Oro amarillo</option>
+                </select>
+            </div>
+            <button type="submit" class="w-full py-3.5 rounded-full kroma-btn-primary font-bold text-sm shadow">✨ Calcular mi Tono Ideal</button>
+        </form>
+
+        <div id="resultadoToneMatcher" class="lg:col-span-7 bg-white border border-pink-100 rounded-3xl p-6 sm:p-8 min-h-[420px] flex flex-col justify-center">
+            <div class="text-center space-y-4">
+                <img src="/images/banner-tonematcher.jpg" alt="Muestras de tono" class="w-full h-48 object-cover rounded-2xl">
+                <h2 class="text-xl font-extrabold text-kromaDark">Tu resultado personalizado aparecerá aquí</h2>
+                <p class="text-xs text-gray-500 max-w-md mx-auto">Analizamos tus respuestas usando <code>ToneMatcherService</code> y seleccionamos los tonos exactos disponibles en MongoDB.</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.getElementById('formToneMatcher').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = Object.fromEntries(new FormData(e.target).entries());
+    const resp = await fetch('/api/tone-matcher', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    const cont = document.getElementById('resultadoToneMatcher');
+    if (!data.ok) return;
+
+    const cards = (data.recomendaciones || []).map(({ producto, tonoRecomendado }) => `
+        <div class="flex items-center gap-3 p-3.5 rounded-2xl border border-pink-100 bg-pink-50/30">
+            <img src="${producto.imagenUrl}" alt="${producto.nombre}" class="w-16 h-16 rounded-xl object-contain bg-white p-1 border border-pink-100 shrink-0">
+            <div class="flex-1 min-w-0">
+                <p class="text-xs font-extrabold text-kromaDark truncate">${producto.nombre}</p>
+                <div class="flex items-center gap-1.5 mt-1">
+                    <span class="w-3.5 h-3.5 rounded-full border border-gray-300" style="background:${tonoRecomendado.hex}"></span>
+                    <span class="text-[11px] font-bold text-kromaPink">${tonoRecomendado.nombreTono}</span>
+                </div>
+                <p class="text-xs font-bold text-gray-700 mt-1">${KromaStore.formatearCOP(producto.precio)}</p>
+            </div>
+            <button type="button"
+                onclick="KromaStore.agregarAlCarrito('${producto.id}', '${tonoRecomendado.nombreTono.replace(/'/g, "\\'")}', '${tonoRecomendado.hex}')"
+                class="px-3.5 py-2 rounded-full kroma-btn-primary text-xs font-bold shrink-0">+ Bolsa</button>
+        </div>
+    `).join('');
+
+    cont.innerHTML = `
+        <div class="space-y-5">
+            <div class="p-4 rounded-2xl bg-gradient-to-r from-pink-50 to-orange-50 border border-pink-200">
+                <p class="text-xs font-bold uppercase tracking-wider text-kromaPink">Diagnóstico Kroma • Piel ${data.tipoPiel}</p>
+                <h3 class="text-2xl font-extrabold text-kromaDark mt-1">Subtono ${data.diagnostico.subtono}</h3>
+                <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">${data.diagnostico.explicacion}</p>
+            </div>
+            <div>
+                <h4 class="text-sm font-extrabold text-kromaDark mb-3">Tonos y productos recomendados para ti:</h4>
+                <div class="space-y-3">${cards}</div>
+            </div>
+        </div>
+    `;
+});
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,73 @@
+/* Estilos personalizados Kroma Cosmetics S.A.S. (Inspiración Trendy Shop Colombia) */
+:root {
+    --kroma-pink: #E91E63;
+    --kroma-blush: #FFF0F5;
+    --kroma-dark: #231B1E;
+}
+
+body {
+    font-family: 'Plus Jakarta Sans', 'Poppins', system-ui, -apple-system, sans-serif;
+    color: var(--kroma-dark);
+    background-color: #FFFFFF;
+}
+
+.kroma-gradient-banner {
+    background: linear-gradient(120deg, #FFE4EE 0%, #FFF5F8 48%, #FCEEE7 100%);
+}
+
+.kroma-btn-primary {
+    background: linear-gradient(135deg, #E91E63 0%, #D81B60 100%);
+    color: #fff;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.kroma-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(233, 30, 99, 0.28);
+}
+
+.product-card {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(233, 30, 99, 0.10);
+}
+
+.swatch-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 9999px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.14);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.swatch-dot.active,
+.swatch-dot:hover {
+    transform: scale(1.16);
+    box-shadow: 0 0 0 2px #E91E63;
+}
+
+.category-bubble {
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.category-bubble:hover {
+    transform: translateY(-3px);
+}
+
+.drawer-backdrop {
+    backdrop-filter: blur(4px);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}

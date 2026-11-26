@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titulo})}"></head>
+<body class="bg-white text-kromaDark antialiased min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: header}"></div>
+
+<main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 w-full">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+            <span class="text-xs font-extrabold uppercase tracking-wider text-kromaPink">Trazabilidad &amp; Garantía de Tono (RF06 / RF07)</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-kromaDark mt-1">Mis Pedidos y Cambios de Tono</h1>
+        </div>
+        <form action="/mis-pedidos" method="GET" class="flex gap-2">
+            <input type="email" name="correo" th:value="${correoConsulta}" placeholder="Consultar por correo de compra..." class="rounded-full border border-pink-200 px-4 py-2 text-xs w-64">
+            <button type="submit" class="px-4 py-2 rounded-full kroma-btn-primary text-xs font-bold">Buscar</button>
+        </form>
+    </div>
+
+    <div th:if="${#lists.isEmpty(pedidos)}" class="bg-pink-50/40 border border-pink-100 rounded-3xl p-10 text-center space-y-3">
+        <p class="text-3xl">📦</p>
+        <p class="font-bold text-gray-700">No encontramos pedidos asociados aún.</p>
+        <p class="text-xs text-gray-500">Inicia sesión como cliente (ej. <code>camila@ejemplo.com.co</code>) o consulta con el correo de tu compra.</p>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(pedidos)}" class="space-y-4">
+        <div th:each="pedido : ${pedidos}" class="bg-white border border-pink-100 rounded-3xl p-6 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-pink-50 pb-3">
+                <div>
+                    <span class="font-extrabold text-base text-kromaDark" th:text="'Pedido ' + ${pedido.numeroPedido}"></span>
+                    <span class="ml-2 text-xs text-gray-500" th:text="${#dates.format(T(java.util.Date).from(pedido.fechaPedido), 'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <span class="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold" th:text="'🌱 ' + ${pedido.tipoEmpaqueSostenible}"></span>
+                    <span class="px-3 py-1 rounded-full bg-pink-100 text-kromaPink font-bold" th:text="${pedido.estadoPedido}"></span>
+                    <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-bold" th:text="'Guía: ' + ${pedido.numeroGuia}"></span>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <div th:each="it : ${pedido.items}" class="flex items-center justify-between text-xs bg-pink-50/40 p-2.5 rounded-xl">
+                        <div>
+                            <p class="font-bold text-kromaDark" th:text="${it.cantidad} + 'x ' + ${it.nombreProducto}"></p>
+                            <p class="text-gray-500">Tono: <span class="font-semibold text-kromaPink" th:text="${it.tonoSeleccionado}"></span></p>
+                        </div>
+                        <button th:if="${pedido.estaEnPlazoGarantia()}" type="button"
+                                th:data-pid="${pedido.id}"
+                                th:data-num="${pedido.numeroPedido}"
+                                th:data-prod="${it.nombreProducto}"
+                                th:data-tono="${it.tonoSeleccionado}"
+                                onclick="abrirModalGarantia(this.dataset.pid, this.dataset.num, this.dataset.prod, this.dataset.tono)"
+                                class="px-3 py-1.5 rounded-full border border-kromaPink text-kromaPink font-bold hover:bg-kromaPink hover:text-white transition">
+                            Cambiar Tono (7d)
+                        </button>
+                    </div>
+                </div>
+                <div class="text-xs space-y-1 bg-gray-50 p-3.5 rounded-2xl">
+                    <p><strong>Destino:</strong> <span th:text="${pedido.direccionEntrega.direccion + ', ' + pedido.direccionEntrega.ciudad + ' (' + pedido.direccionEntrega.departamento + ')'}"></span></p>
+                    <p><strong>Pago:</strong> <span th:text="${pedido.metodoPago + ' • Comprobante ' + pedido.comprobantePago}"></span></p>
+                    <p><strong>Total:</strong> <span class="font-extrabold text-kromaPink" th:text="${currencyHelper.cop(pedido.total)}"></span></p>
+                    <p th:classappend="${pedido.estaEnPlazoGarantia()} ? 'text-emerald-700' : 'text-gray-400'"
+                       th:text="${pedido.estaEnPlazoGarantia()} ? '✓ Dentro del plazo vigente de 7 días para Garantía de Tono.' : 'Plazo de 7 días finalizado.'"
+                       class="text-[11px] font-semibold pt-1"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${!#lists.isEmpty(garantias)}" class="space-y-3">
+        <h2 class="text-xl font-extrabold text-kromaDark">Mis Solicitudes de Garantía de Tono</h2>
+        <div class="grid sm:grid-cols-2 gap-4">
+            <div th:each="g : ${garantias}" class="bg-white border border-pink-100 rounded-2xl p-4 text-xs space-y-1.5">
+                <div class="flex justify-between items-center">
+                    <span class="font-extrabold text-kromaDark" th:text="${g.codigoSolicitud + ' • ' + g.numeroPedido}"></span>
+                    <span class="px-2.5 py-0.5 rounded-full bg-pink-100 text-kromaPink font-bold" th:text="${g.estadoSolicitud}"></span>
+                </div>
+                <p><strong>Producto:</strong> <span th:text="${g.productoNombre}"></span></p>
+                <p><strong>Cambio:</strong> <span th:text="${g.tonoOriginal}"></span> → <span class="text-kromaPink font-bold" th:text="${g.tonoSolicitado}"></span></p>
+                <p class="text-gray-500"><strong>Motivo:</strong> <span th:text="${g.motivo}"></span></p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Solicitud Garantía de Tono -->
+<div id="modalGarantia" class="fixed inset-0 z-50 hidden bg-black/50 drawer-backdrop items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center">
+            <h3 class="font-extrabold text-lg text-kromaDark">Solicitar Garantía de Tono</h3>
+            <button type="button" onclick="cerrarModalGarantia()" class="text-gray-500 font-bold">✕</button>
+        </div>
+        <form id="formGarantia" class="space-y-3 text-xs">
+            <input type="hidden" name="pedidoId" id="garPedidoId">
+            <p class="text-gray-600">Pedido <strong id="garNumeroPedido"></strong> • <strong id="garProducto"></strong></p>
+            <input type="hidden" name="productoNombre" id="garProductoInput">
+            <div>
+                <label class="font-bold block mb-1">Tono recibido</label>
+                <input type="text" name="tonoOriginal" id="garTonoOriginal" readonly class="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+            </div>
+            <div>
+                <label class="font-bold block mb-1">Nuevo tono deseado *</label>
+                <input type="text" name="tonoSolicitado" required placeholder="Ej: 03 Miel Dorada" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div>
+                <label class="font-bold block mb-1">Motivo del cambio *</label>
+                <textarea name="motivo" required rows="3" placeholder="Ej: El tono resultó muy claro para mi piel." class="w-full rounded-xl border border-pink-200 px-3 py-2"></textarea>
+            </div>
+            <button type="submit" class="w-full py-3 rounded-full kroma-btn-primary font-bold">Radicar Cambio Gratuito</button>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalGarantia(pedidoId, numeroPedido, productoNombre, tonoOriginal) {
+    document.getElementById('garPedidoId').value = pedidoId;
+    document.getElementById('garNumeroPedido').textContent = numeroPedido;
+    document.getElementById('garProducto').textContent = productoNombre;
+    document.getElementById('garProductoInput').value = productoNombre;
+    document.getElementById('garTonoOriginal').value = tonoOriginal;
+    const modal = document.getElementById('modalGarantia');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+function cerrarModalGarantia() {
+    const modal = document.getElementById('modalGarantia');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+document.getElementById('formGarantia').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = Object.fromEntries(new FormData(e.target).entries());
+    const resp = await fetch('/api/garantias', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!data.ok) { alert(data.mensaje); return; }
+    cerrarModalGarantia();
+    window.location.reload();
+});
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

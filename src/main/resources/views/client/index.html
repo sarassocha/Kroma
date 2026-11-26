@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titulo})}"></head>
+<body class="bg-white text-kromaDark antialiased min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: header}"></div>
+
+<main class="flex-1">
+    <!-- Hero Banner Editorial Estilo Trendy -->
+    <section class="kroma-gradient-banner border-b border-pink-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 grid lg:grid-cols-12 gap-8 items-center">
+            <div class="lg:col-span-6 space-y-5">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-sm border border-pink-100 text-xs font-bold text-kromaPink">
+                    ✨ NUEVA COLECCIÓN SKIN-FIRST COLOMBIA
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-kromaDark leading-[1.1]">
+                    Maquillaje que <span class="text-kromaPink">cuida tu piel</span>, realza tu tono natural.
+                </h1>
+                <p class="text-sm sm:text-base text-gray-600 max-w-xl leading-relaxed">
+                    Fórmulas colombianas <strong class="text-kromaDark">cruelty-free</strong>, libres de ingredientes abrasivos y despachadas en empaques 100% biodegradables. Nuestro asistente te guía en 30 segundos.
+                </p>
+                <div class="flex flex-wrap gap-3 pt-1">
+                    <a href="#catalogo" class="px-6 py-3.5 rounded-full kroma-btn-primary font-bold text-sm shadow">
+                        Ver Catálogo Skin-First
+                    </a>
+                    <a href="/tone-matcher" class="px-6 py-3.5 rounded-full bg-white text-kromaDark border-2 border-pink-200 hover:border-kromaPink font-bold text-sm transition flex items-center gap-2">
+                        🎨 Encuentra tu Tono Ideal
+                    </a>
+                </div>
+                <div class="flex items-center gap-6 pt-2 text-xs font-semibold text-gray-600">
+                    <span>🐰 0% Testeo Animal</span>
+                    <span>🌱 Empaques Compostables</span>
+                    <span>🛡️ Garantía de Tono 7 días</span>
+                </div>
+            </div>
+            <div class="lg:col-span-6">
+                <div class="relative rounded-3xl overflow-hidden shadow-xl border-4 border-white">
+                    <img src="/images/hero-kroma.jpg" alt="Kroma Cosmetics Skin-First" class="w-full h-64 sm:h-80 lg:h-96 object-cover">
+                    <div class="absolute bottom-4 left-4 right-4 sm:right-auto bg-white/95 backdrop-blur px-4 py-3 rounded-2xl shadow-lg flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-pink-100 text-kromaPink flex items-center justify-center font-extrabold text-lg">★</div>
+                        <div>
+                            <p class="text-xs font-extrabold text-kromaDark">Garantía de Tono Kroma</p>
+                            <p class="text-[11px] text-gray-500">Cambio gratuito hasta 7 días después de recibirlo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Burbujas de Categorías Circulares -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg sm:text-xl font-extrabold text-kromaDark">Explora por categoría</h2>
+            <a href="/tone-matcher" class="text-xs font-bold text-kromaPink hover:underline">¿No sabes qué elegir? Haz el test →</a>
+        </div>
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-4">
+            <a th:each="cat : ${categorias}"
+               th:href="@{/(categoria=${cat})} + '#catalogo'"
+               th:classappend="${filtroCategoria == cat} ? 'border-kromaPink bg-pink-50/80 shadow-sm' : 'border-pink-100 bg-white hover:border-pink-300'"
+               class="category-bubble flex flex-col items-center gap-2 p-3 rounded-2xl border">
+                <div th:classappend="${filtroCategoria == cat} ? 'bg-kromaPink text-white' : 'bg-pink-50 text-kromaPink'"
+                     class="w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-inner">
+                    <span th:switch="${cat}">
+                        <span th:case="'Rostro'">🧴</span>
+                        <span th:case="'Labios'">💋</span>
+                        <span th:case="'Ojos'">👁️</span>
+                        <span th:case="'Cejas'">🪄</span>
+                        <span th:case="'Skincare'">🌸</span>
+                        <span th:case="*">✨</span>
+                    </span>
+                </div>
+                <span th:text="${cat}" th:classappend="${filtroCategoria == cat} ? 'text-kromaPink' : 'text-kromaDark'" class="text-xs font-bold"></span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Filtros Dinámicos Skin-First (RF02) -->
+    <section id="catalogo" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-6">
+        <form action="/#catalogo" method="GET" class="bg-pink-50/50 border border-pink-100 rounded-3xl p-4 sm:p-5 flex flex-wrap items-end gap-3">
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Categoría</label>
+                <select name="categoria" class="w-full rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-semibold">
+                    <option th:each="c : ${categorias}" th:value="${c}" th:text="${c}" th:selected="${filtroCategoria == c}"></option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Tipo de Piel</label>
+                <select name="tipoPiel" class="w-full rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-semibold">
+                    <option th:each="tp : ${tiposPiel}" th:value="${tp}" th:text="${tp}" th:selected="${filtroTipoPiel == tp}"></option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[160px]">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Subtono / Gama</label>
+                <select name="gamaTono" class="w-full rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs font-semibold">
+                    <option th:each="gama : ${gamasTono}" th:value="${gama}" th:text="${gama}" th:selected="${filtroGamaTono == gama}"></option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[180px]">
+                <label class="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-1">Palabra clave</label>
+                <input type="text" name="q" th:value="${filtroQ}" placeholder="Ej: hialurónico, lip, rubor" class="w-full rounded-xl border border-pink-200 bg-white px-3 py-2 text-xs">
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="px-5 py-2 rounded-xl kroma-btn-primary text-xs font-bold">Filtrar</button>
+                <a href="/#catalogo" class="px-4 py-2 rounded-xl bg-white border border-gray-200 text-xs font-semibold text-gray-600 hover:border-pink-300">Limpiar</a>
+            </div>
+        </form>
+    </section>
+
+    <!-- Grid de Productos -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-kromaDark">Catálogo Skin-First</h2>
+                <p class="text-xs text-gray-500"><span th:text="${#lists.size(productos)}">0</span> productos certificados cruelty-free encontrados</p>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(productos)}" class="text-center py-16 bg-pink-50/40 rounded-3xl border border-pink-100">
+            <p class="text-3xl mb-2">🔍</p>
+            <p class="font-bold text-gray-700">No encontramos productos con esa combinación de filtros.</p>
+            <a href="/#catalogo" class="inline-block mt-4 px-5 py-2.5 rounded-full kroma-btn-primary text-xs font-bold">Ver todo el catálogo</a>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(productos)}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <article th:each="prod : ${productos}" class="product-card bg-white rounded-3xl border border-pink-100 overflow-hidden flex flex-col justify-between p-4">
+                <div>
+                    <div class="relative rounded-2xl bg-pink-50/40 overflow-hidden mb-3 cursor-pointer"
+                         th:data-id="${prod.id}" onclick="KromaStore.abrirDetalle(this.getAttribute('data-id'))">
+                        <img th:src="${prod.imagenUrl}" th:alt="${prod.nombre}" class="w-full h-52 object-contain p-2">
+                        <div class="absolute top-2.5 left-2.5 flex flex-col gap-1">
+                            <span th:if="${prod.descuentoPorcentaje > 0}" th:text="'-' + ${prod.descuentoPorcentaje} + '%'"
+                                  class="bg-kromaPink text-white text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm"></span>
+                            <span th:if="${prod.destacado}" class="bg-white/95 text-kromaDark text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-sm">★ Top Ventas</span>
+                        </div>
+                        <span class="absolute top-2.5 right-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                            🐰 Cruelty-Free
+                        </span>
+                    </div>
+
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-kromaPink" th:text="${prod.categoria} + ' • ' + ${prod.gamaTono}"></p>
+                    <h3 class="font-extrabold text-sm text-kromaDark mt-0.5 line-clamp-2 cursor-pointer hover:text-kromaPink"
+                        th:text="${prod.nombre}" th:data-id="${prod.id}" onclick="KromaStore.abrirDetalle(this.getAttribute('data-id'))"></h3>
+                    <p class="text-xs text-gray-500 mt-1 line-clamp-2" th:text="${prod.descripcionCorta}"></p>
+
+                    <div th:if="${!#lists.isEmpty(prod.paletaTonos)}" class="mt-3">
+                        <p class="text-[11px] text-gray-500 mb-1.5">Tono: <span class="tono-activo-label font-bold text-kromaDark" th:text="${prod.paletaTonos[0].nombreTono}"></span></p>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <button type="button"
+                                    th:each="t, stat : ${prod.paletaTonos}"
+                                    th:title="${t.nombreTono + ' (' + t.subtono + ')'}"
+                                    th:data-pid="${prod.id}"
+                                    th:data-tono="${t.nombreTono}"
+                                    th:data-hex="${t.hex}"
+                                    onclick="KromaStore.seleccionarTonoTarjeta(this.getAttribute('data-pid'), this.getAttribute('data-tono'), this.getAttribute('data-hex'), this)"
+                                    th:classappend="${stat.index == 0} ? 'active' : ''"
+                                    class="swatch-dot"
+                                    th:style="'background-color:' + ${t.hex}"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-pink-50 space-y-2.5">
+                    <div class="flex items-baseline justify-between">
+                        <div>
+                            <span class="text-lg font-extrabold text-kromaPink" th:text="${currencyHelper.cop(prod.precio)}"></span>
+                            <span th:if="${prod.precioAnterior > prod.precio}" th:text="${currencyHelper.cop(prod.precioAnterior)}"
+                                  class="text-xs text-gray-400 line-through ml-1"></span>
+                        </div>
+                        <span th:classappend="${prod.stock > 0} ? 'text-emerald-700' : 'text-red-500'"
+                              th:text="${prod.stock > 0 ? 'Stock: ' + prod.stock : 'Agotado'}"
+                              class="text-[11px] font-semibold"></span>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button type="button"
+                                th:disabled="${prod.stock <= 0}"
+                                th:data-pid="${prod.id}"
+                                onclick="KromaStore.agregarAlCarrito(this.getAttribute('data-pid'))"
+                                th:text="${prod.stock > 0 ? '+ Agregar' : 'Agotado'}"
+                                class="flex-1 py-2.5 rounded-full kroma-btn-primary text-xs font-bold disabled:opacity-40"></button>
+                        <button type="button"
+                                th:data-pid="${prod.id}"
+                                onclick="KromaStore.abrirDetalle(this.getAttribute('data-pid'))"
+                                class="px-3.5 py-2.5 rounded-full border border-pink-200 text-xs font-bold text-kromaDark hover:border-kromaPink transition">Ver</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Banner Tone Matcher -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="rounded-3xl overflow-hidden bg-gradient-to-r from-pink-50 via-white to-orange-50 border border-pink-100 grid lg:grid-cols-12 items-center shadow-sm">
+            <div class="lg:col-span-6 p-8 sm:p-10 space-y-4">
+                <span class="inline-block px-3 py-1 rounded-full bg-kromaPink text-white text-[11px] font-bold uppercase tracking-wider">Asistente Virtual RF03</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-kromaDark">¿No estás segura de cuál es tu subtono?</h2>
+                <p class="text-sm text-gray-600 leading-relaxed">
+                    Nuestro <strong>Tone Matcher Kroma</strong> analiza tu tipo de piel y subtono (frío, neutro o cálido) para recomendarte el match exacto y reducir devoluciones. Además cuentas con <strong>Garantía de Tono por 7 días</strong>.
+                </p>
+                <a href="/tone-matcher" class="inline-flex items-center gap-2 px-6 py-3 rounded-full kroma-btn-primary font-bold text-sm">
+                    Iniciar Test Tone Matcher →
+                </a>
+            </div>
+            <div class="lg:col-span-6 h-64 lg:h-80">
+                <img src="/images/banner-tonematcher.jpg" alt="Tone Matcher Kroma" class="w-full h-full object-cover">
+            </div>
+        </div>
+    </section>
+</main>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${titulo}">Kroma Cosmetics S.A.S.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/kroma.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kromaPink: '#E91E63',
+                        kromaBlush: '#FFF0F5',
+                        kromaNude: '#F8ECE6',
+                        kromaDark: '#231B1E'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body>
+<div th:fragment="header">
+    <!-- Barra superior estilo Trendy -->
+    <div class="bg-kromaPink text-white text-xs sm:text-sm py-2 px-4 text-center font-medium tracking-wide">
+        <span class="inline-flex items-center gap-2 flex-wrap justify-center">
+            <span>✨ Envío ecológico GRATIS en Colombia desde $120.000</span>
+            <span class="hidden sm:inline">•</span>
+            <span>🐰 100% Cruelty-Free &amp; Skin-First</span>
+            <span class="hidden md:inline">•</span>
+            <span class="hidden md:inline">🎨 Garantía de Tono por 7 días</span>
+        </span>
+    </div>
+
+    <!-- Header Principal Sticky -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-pink-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                <a href="/" class="flex items-center gap-2.5 shrink-0">
+                    <div class="w-9 h-9 rounded-full bg-kromaPink text-white flex items-center justify-center font-extrabold text-lg shadow-sm">K</div>
+                    <div class="leading-tight">
+                        <span class="font-extrabold text-xl tracking-tight text-kromaDark">KROMA</span>
+                        <span class="block text-[10px] uppercase tracking-[0.22em] text-kromaPink font-bold">Skin-First</span>
+                    </div>
+                </a>
+
+                <form action="/" method="GET" class="hidden md:flex flex-1 max-w-md relative">
+                    <input type="text" name="q" th:value="${filtroQ != null ? filtroQ : ''}"
+                           placeholder="Buscar bases sérum, lip oil, rubor, ingredientes..."
+                           class="w-full pl-4 pr-11 py-2 rounded-full bg-pink-50/70 border border-pink-200 text-sm focus:outline-none focus:border-kromaPink focus:bg-white transition">
+                    <button type="submit" aria-label="Buscar" class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-kromaPink text-white flex items-center justify-center hover:bg-pink-700 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </button>
+                </form>
+
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <a href="/tone-matcher" class="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-pink-50 text-kromaPink border border-pink-200 text-xs font-bold hover:bg-pink-100 transition">
+                        🎨 Tone Matcher
+                    </a>
+                    <a href="/mis-pedidos" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-kromaPink px-2 py-1.5 transition">
+                        Mis Pedidos
+                    </a>
+
+                    <th:block th:if="${usuarioActual != null}">
+                        <a th:if="${usuarioActual.rol == 'admin'}" href="/admin" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-kromaDark text-white text-xs font-bold hover:bg-gray-800 transition">
+                            ⚙️ Panel Admin
+                        </a>
+                        <span th:if="${usuarioActual.rol != 'admin'}" class="hidden sm:inline-block text-xs font-semibold text-gray-700 bg-pink-50 px-3 py-1.5 rounded-full">
+                            Hola, <span th:text="${usuarioActual.nombre}">Cliente</span>
+                        </span>
+                        <a href="/auth/logout" class="text-xs font-semibold text-gray-500 hover:text-kromaPink px-2 py-1">Salir</a>
+                    </th:block>
+
+                    <th:block th:if="${usuarioActual == null}">
+                        <a href="/auth/login" class="inline-flex items-center gap-1 text-xs font-semibold text-gray-700 hover:text-kromaPink px-2.5 py-1.5 rounded-full border border-gray-200 hover:border-pink-300 transition">
+                            Ingresar
+                        </a>
+                        <a href="/auth/admin-login" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-kromaDark px-2.5 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition">
+                            Admin
+                        </a>
+                    </th:block>
+
+                    <button id="btnAbrirCarrito" type="button" onclick="KromaStore.abrirCarrito()" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-kromaPink text-white text-xs font-bold shadow-sm hover:bg-pink-700 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        <span class="hidden sm:inline">Bolsa</span>
+                        <span id="badgeCarrito" th:text="${carritoCantidad}" class="bg-white text-kromaPink rounded-full px-1.5 py-0.5 text-[11px] font-extrabold leading-none">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <nav class="flex items-center gap-5 overflow-x-auto no-scrollbar py-2.5 text-xs font-semibold text-gray-600 border-t border-pink-50">
+                <a href="/" class="hover:text-kromaPink whitespace-nowrap">Todo el Catálogo</a>
+                <a href="/?categoria=Rostro" class="hover:text-kromaPink whitespace-nowrap">Rostro</a>
+                <a href="/?categoria=Labios" class="hover:text-kromaPink whitespace-nowrap">Labios</a>
+                <a href="/?categoria=Ojos" class="hover:text-kromaPink whitespace-nowrap">Ojos</a>
+                <a href="/?categoria=Cejas" class="hover:text-kromaPink whitespace-nowrap">Cejas</a>
+                <a href="/?categoria=Skincare" class="hover:text-kromaPink whitespace-nowrap">Skincare Prep</a>
+                <a href="/tone-matcher" class="text-kromaPink font-bold whitespace-nowrap">✨ Asistente Tone Matcher</a>
+                <a href="/mis-pedidos" class="hover:text-kromaPink whitespace-nowrap sm:hidden">Mis Pedidos</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Drawer Lateral del Carrito (RF04) -->
+    <div id="carritoOverlay" class="fixed inset-0 z-50 hidden bg-black/40 drawer-backdrop flex justify-end">
+        <div class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
+            <div class="p-5 border-b border-pink-100 flex items-center justify-between bg-pink-50/50">
+                <div>
+                    <h3 class="font-extrabold text-lg text-kromaDark">Tu Bolsa Kroma</h3>
+                    <p class="text-xs text-gray-500">Empaque biodegradable &amp; garantía de tono 7 días</p>
+                </div>
+                <button type="button" onclick="KromaStore.cerrarCarrito()" class="w-8 h-8 rounded-full hover:bg-pink-100 flex items-center justify-center text-gray-600 font-bold">✕</button>
+            </div>
+            <div id="carritoLista" class="flex-1 overflow-y-auto p-5 space-y-4"></div>
+            <div class="p-5 border-t border-pink-100 bg-pink-50/30 space-y-3">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600 font-medium">Subtotal productos</span>
+                    <span id="carritoSubtotal" class="font-extrabold text-lg text-kromaDark">$0</span>
+                </div>
+                <p id="carritoMensajeEnvio" class="text-xs text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl font-medium"></p>
+                <a href="/checkout" class="block w-full text-center py-3.5 rounded-full kroma-btn-primary font-bold text-sm">
+                    Finalizar Compra Sostenible →
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle Rápido de Producto -->
+    <div id="modalProducto" class="fixed inset-0 z-50 hidden bg-black/50 drawer-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl grid md:grid-cols-2 relative">
+            <button type="button" onclick="KromaStore.cerrarDetalle()" class="absolute right-4 top-4 z-10 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center text-gray-700 font-bold hover:bg-pink-50">✕</button>
+            <div class="bg-pink-50/60 flex items-center justify-center p-6">
+                <img id="modalProdImg" src="" alt="" class="w-full max-h-72 object-contain rounded-2xl">
+            </div>
+            <div class="p-6 flex flex-col justify-between space-y-4">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span id="modalProdCat" class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-pink-100 text-kromaPink"></span>
+                        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">🐰 Cruelty-Free</span>
+                    </div>
+                    <h3 id="modalProdNombre" class="text-xl font-extrabold text-kromaDark"></h3>
+                    <p id="modalProdPrecio" class="text-2xl font-extrabold text-kromaPink"></p>
+                    <p id="modalProdDesc" class="text-xs text-gray-600 leading-relaxed"></p>
+                    <div class="bg-pink-50/60 p-3 rounded-2xl border border-pink-100">
+                        <p class="text-[11px] font-bold text-kromaDark uppercase tracking-wider mb-1">Ingredientes Skin-First (Libre de abrasivos)</p>
+                        <p id="modalProdIngredientes" class="text-xs text-gray-600"></p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-700 mb-1.5">Tono seleccionado: <span id="modalProdTonoNombre" class="text-kromaPink"></span></p>
+                        <div id="modalProdSwatches" class="flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <button id="modalProdBtnAgregar" type="button" class="w-full py-3 rounded-full kroma-btn-primary font-bold text-sm">Agregar a mi Bolsa</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="kromaToast" class="fixed bottom-5 right-5 z-50 hidden bg-kromaDark text-white px-5 py-3 rounded-2xl shadow-xl text-sm font-semibold"></div>
+</div>
+
+<div th:fragment="footer">
+    <footer class="bg-kromaDark text-gray-300 mt-16 border-t border-pink-900/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-kromaPink text-white flex items-center justify-center font-extrabold">K</div>
+                    <span class="font-extrabold text-lg text-white">KROMA COSMETICS S.A.S.</span>
+                </div>
+                <p class="text-xs text-gray-400 leading-relaxed">
+                    Maquillaje colombiano <span class="text-pink-300 font-semibold">skin-first</span> y <span class="text-emerald-300 font-semibold">100% cruelty-free</span>. Empaques biodegradables con trazabilidad ecológica.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-sm mb-3">Categorías</h4>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="/?categoria=Rostro" class="hover:text-pink-300">Rostro &amp; Bases Sérum</a></li>
+                    <li><a href="/?categoria=Labios" class="hover:text-pink-300">Labios &amp; Lip Oils</a></li>
+                    <li><a href="/?categoria=Ojos" class="hover:text-pink-300">Ojos &amp; Pestañinas</a></li>
+                    <li><a href="/?categoria=Cejas" class="hover:text-pink-300">Cejas Laminadas</a></li>
+                    <li><a href="/?categoria=Skincare" class="hover:text-pink-300">Skincare Prep</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-sm mb-3">Compromiso y Normativa</h4>
+                <ul class="space-y-2 text-xs text-gray-400">
+                    <li>✓ Garantía de Tono gratuita (7 días)</li>
+                    <li>✓ Estatuto del Consumidor (Ley 1480 de 2011)</li>
+                    <li>✓ Certificación Cruelty-Free &amp; No Abrasivos</li>
+                    <li>✓ Empaques de Bagazo de Caña y Compostables</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-white font-bold text-sm mb-3">Accesos Rápidos</h4>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="/tone-matcher" class="hover:text-pink-300">🎨 Asistente Tone Matcher</a></li>
+                    <li><a href="/mis-pedidos" class="hover:text-pink-300">📦 Mis Pedidos y Garantías</a></li>
+                    <li><a href="/auth/login" class="hover:text-pink-300">👤 Ingresar como Cliente</a></li>
+                    <li><a href="/auth/admin-login" class="text-pink-300 font-semibold hover:underline">🔐 Portal Administrador</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="border-t border-white/10 py-4 text-center text-[11px] text-gray-500">
+            © 2026 Kroma Cosmetics S.A.S. • Java Spring Boot MVC + POO + MongoDB • Colombia
+        </div>
+    </footer>
+    <script src="/js/kroma-store.js"></script>
+</div>
+</body>
+</html>

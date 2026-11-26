@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titulo})}"></head>
+<body class="bg-white text-kromaDark antialiased min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: header}"></div>
+
+<main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 w-full">
+    <!-- Cabecera Admin -->
+    <div class="flex flex-wrap items-center justify-between gap-4 bg-kromaDark text-white rounded-3xl p-6 shadow-lg">
+        <div>
+            <span class="text-[11px] uppercase tracking-widest text-pink-300 font-bold">Panel Administrativo Exclusivo • RU03</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold mt-1">Gestión de Catálogo y Ventas Kroma</h1>
+            <p class="text-xs text-gray-300 mt-1">Sesión activa: <span th:text="${usuarioActual.nombre + ' (' + usuarioActual.correo + ')'}"></span></p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="abrirModalNuevoProducto()" class="px-5 py-2.5 rounded-full bg-kromaPink hover:bg-pink-700 text-white text-xs font-extrabold shadow">
+                + Agregar Producto
+            </button>
+            <a href="/" class="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-bold">Ver Tienda Cliente</a>
+        </div>
+    </div>
+
+    <div th:if="${flashOk != null}" class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-semibold" th:text="'✅ ' + ${flashOk}"></div>
+    <div th:if="${flashError != null}" class="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold" th:text="'⚠️ ' + ${flashError}"></div>
+
+    <!-- KPIs -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div class="bg-pink-50/60 border border-pink-100 rounded-2xl p-4">
+            <p class="text-[11px] font-bold uppercase text-gray-500">Productos</p>
+            <p class="text-2xl font-extrabold text-kromaDark mt-1" th:text="${totalProductos}">0</p>
+        </div>
+        <div class="bg-pink-50/60 border border-pink-100 rounded-2xl p-4">
+            <p class="text-[11px] font-bold uppercase text-gray-500">Compras Realizadas</p>
+            <p class="text-2xl font-extrabold text-kromaDark mt-1" th:text="${totalPedidos}">0</p>
+        </div>
+        <div class="bg-pink-50/60 border border-pink-100 rounded-2xl p-4">
+            <p class="text-[11px] font-bold uppercase text-gray-500">Ingresos Totales</p>
+            <p class="text-xl font-extrabold text-kromaPink mt-1" th:text="${currencyHelper.cop(ingresosTotales)}">$0</p>
+        </div>
+        <div class="bg-pink-50/60 border border-pink-100 rounded-2xl p-4">
+            <p class="text-[11px] font-bold uppercase text-gray-500">Garantías Pendientes</p>
+            <p class="text-2xl font-extrabold text-amber-600 mt-1" th:text="${garantiasPendientes}">0</p>
+        </div>
+        <div class="bg-pink-50/60 border border-pink-100 rounded-2xl p-4">
+            <p class="text-[11px] font-bold uppercase text-gray-500">Stock Bajo (≤10)</p>
+            <p class="text-2xl font-extrabold text-red-600 mt-1" th:text="${stockBajo}">0</p>
+        </div>
+    </div>
+
+    <!-- Sección 1: CRUD Productos (Agregar, Editar Especificaciones, Eliminar) -->
+    <div class="bg-white border border-pink-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div>
+            <h2 class="text-lg font-extrabold text-kromaDark">Catálogo de Productos (MongoDB)</h2>
+            <p class="text-xs text-gray-500">Agrega, edita especificaciones técnicas (RD02 Cruelty-Free) o elimina productos del inventario.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                <tr class="border-b border-pink-100 text-gray-500 uppercase text-[11px]">
+                    <th class="py-3 px-2">Producto</th>
+                    <th class="py-3 px-2">Categoría / Tono</th>
+                    <th class="py-3 px-2">Precio</th>
+                    <th class="py-3 px-2">Stock</th>
+                    <th class="py-3 px-2">Cruelty-Free</th>
+                    <th class="py-3 px-2 text-right">Acciones</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-pink-50">
+                <tr th:each="p : ${productos}" class="hover:bg-pink-50/30">
+                    <td class="py-3 px-2">
+                        <div class="flex items-center gap-3">
+                            <img th:src="${p.imagenUrl}" alt="" class="w-11 h-11 rounded-xl object-contain bg-pink-50 border border-pink-100 shrink-0">
+                            <div>
+                                <p class="font-extrabold text-kromaDark" th:text="${p.nombre}"></p>
+                                <p class="text-[11px] text-gray-400" th:text="${p.codigo + ' • ' + p.linea}"></p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="font-bold text-kromaPink" th:text="${p.categoria}"></span>
+                        <span class="block text-[11px] text-gray-500" th:text="'Gama: ' + ${p.gamaTono}"></span>
+                    </td>
+                    <td class="py-3 px-2 font-extrabold" th:text="${currencyHelper.cop(p.precio)}"></td>
+                    <td class="py-3 px-2">
+                        <span th:classappend="${p.stock <= 10} ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'"
+                              th:text="${p.stock} + ' uds'" class="px-2.5 py-0.5 rounded-full font-bold"></span>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="text-emerald-700 font-bold" th:text="${p.certificacionCrueltyFree ? '✓ Certificado' : '✗ No'}"></span>
+                    </td>
+                    <td class="py-3 px-2 text-right whitespace-nowrap space-x-1.5">
+                        <button type="button"
+                                th:data-id="${p.id}"
+                                th:data-codigo="${p.codigo}"
+                                th:data-nombre="${p.nombre}"
+                                th:data-desccorta="${p.descripcionCorta}"
+                                th:data-ingredientes="${p.descripcionIngredientes}"
+                                th:data-categoria="${p.categoria}"
+                                th:data-linea="${p.linea}"
+                                th:data-precio="${p.precio}"
+                                th:data-stock="${p.stock}"
+                                th:data-gama="${p.gamaTono}"
+                                th:data-tipopiel="${!#lists.isEmpty(p.tipoPiel) ? p.tipoPiel[0] : 'Todo tipo'}"
+                                th:data-imagen="${p.imagenUrl}"
+                                th:data-paleta="${p.paletaResumenTexto}"
+                                th:data-destacado="${p.destacado}"
+                                onclick="abrirModalEditarProducto(this)"
+                                class="px-3 py-1.5 rounded-full bg-pink-100 text-kromaPink font-bold hover:bg-kromaPink hover:text-white transition">
+                            Editar
+                        </button>
+                        <form th:action="@{/admin/productos/{id}/eliminar(id=${p.id})}" method="POST" class="inline"
+                              onsubmit="return confirm('¿Seguro que deseas eliminar este producto de MongoDB?');">
+                            <button type="submit" class="px-3 py-1.5 rounded-full bg-red-50 text-red-600 font-bold hover:bg-red-600 hover:text-white transition">
+                                Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección 2: Historial de Compras -->
+    <div class="bg-white border border-pink-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <div>
+            <h2 class="text-lg font-extrabold text-kromaDark">Historial de Compras y Despacho Sostenible</h2>
+            <p class="text-xs text-gray-500">Consulta cada transacción, método de pago, empaque ecológico asignado y actualiza el estado del envío.</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                <tr class="border-b border-pink-100 text-gray-500 uppercase text-[11px]">
+                    <th class="py-3 px-2">Pedido / Guía</th>
+                    <th class="py-3 px-2">Cliente</th>
+                    <th class="py-3 px-2">Productos y Tonos</th>
+                    <th class="py-3 px-2">Empaque Eco</th>
+                    <th class="py-3 px-2">Total / Pago</th>
+                    <th class="py-3 px-2">Estado Envío</th>
+                </tr>
+                </thead>
+                <tbody class="divide-y divide-pink-50">
+                <tr th:each="ped : ${pedidos}" class="hover:bg-pink-50/30">
+                    <td class="py-3 px-2">
+                        <p class="font-extrabold text-kromaDark" th:text="${ped.numeroPedido}"></p>
+                        <p class="text-[11px] text-gray-400" th:text="${ped.numeroGuia}"></p>
+                        <p class="text-[10px] text-gray-400" th:text="${#dates.format(T(java.util.Date).from(ped.fechaPedido), 'dd/MM/yyyy HH:mm')}"></p>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="font-bold text-kromaDark" th:text="${ped.datosCliente.nombre}"></p>
+                        <p class="text-[11px] text-gray-500" th:text="'CC ' + ${ped.datosCliente.cedula} + ' • ' + ${ped.datosCliente.correo}"></p>
+                        <p class="text-[11px] text-gray-500" th:text="${ped.direccionEntrega.ciudad} + ', ' + ${ped.direccionEntrega.departamento}"></p>
+                    </td>
+                    <td class="py-3 px-2 space-y-1">
+                        <div th:each="it : ${ped.items}" class="text-[11px]">
+                            <span class="font-bold" th:text="${it.cantidad} + 'x '"></span>
+                            <span th:text="${it.nombreProducto}"></span>
+                            <span class="text-kromaPink font-semibold" th:text="' (' + ${it.tonoSeleccionado} + ')'"></span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="inline-block px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-[11px] font-bold" th:text="'🌱 ' + ${ped.tipoEmpaqueSostenible}"></span>
+                    </td>
+                    <td class="py-3 px-2">
+                        <p class="font-extrabold text-kromaPink" th:text="${currencyHelper.cop(ped.total)}"></p>
+                        <p class="text-[11px] text-gray-500" th:text="${ped.metodoPago + ' • ' + ped.comprobantePago}"></p>
+                    </td>
+                    <td class="py-3 px-2">
+                        <select th:data-id="${ped.id}" onchange="actualizarEstadoPedido(this.dataset.id, this.value)" class="rounded-xl border border-pink-200 px-2.5 py-1.5 text-xs font-bold bg-white">
+                            <option th:each="est : ${ {'Pagado', 'Empacando Eco', 'En Camino', 'Entregado'} }"
+                                    th:value="${est}" th:text="${est}" th:selected="${ped.estadoPedido == est}"></option>
+                        </select>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sección 3: Garantías de Tono -->
+    <div th:if="${!#lists.isEmpty(garantias)}" class="bg-white border border-pink-100 rounded-3xl p-6 shadow-sm space-y-4">
+        <h2 class="text-lg font-extrabold text-kromaDark">Solicitudes de Garantía de Tono (7 Días)</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div th:each="g : ${garantias}" class="p-4 rounded-2xl border border-pink-100 bg-pink-50/30 text-xs flex justify-between items-start gap-3">
+                <div class="space-y-1">
+                    <p class="font-extrabold text-kromaDark" th:text="${g.codigoSolicitud + ' • Pedido ' + g.numeroPedido}"></p>
+                    <p><strong th:text="${g.productoNombre}"></strong> (<span th:text="${g.tonoOriginal}"></span> → <span class="text-kromaPink font-bold" th:text="${g.tonoSolicitado}"></span>)</p>
+                    <p class="text-gray-600" th:text="${g.motivo}"></p>
+                </div>
+                <select th:data-id="${g.id}" onchange="actualizarEstadoGarantia(this.dataset.id, this.value)" class="rounded-xl border border-pink-200 px-2.5 py-1.5 font-bold bg-white">
+                    <option th:each="est : ${ {'Pendiente', 'Aprobada - Despacho Eco', 'Completada', 'Rechazada'} }"
+                            th:value="${est}" th:text="${est}" th:selected="${g.estadoSolicitud == est}"></option>
+                </select>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Modal Agregar / Editar Especificaciones -->
+<div id="modalAdminProducto" class="fixed inset-0 z-50 hidden bg-black/50 drawer-backdrop items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-5 my-8">
+        <div class="flex justify-between items-center">
+            <h3 id="modalAdminTitulo" class="text-xl font-extrabold text-kromaDark">Agregar Nuevo Producto</h3>
+            <button type="button" onclick="cerrarModalAdmin()" class="w-8 h-8 rounded-full hover:bg-pink-50 font-bold text-gray-500">✕</button>
+        </div>
+
+        <form id="formAdminProducto" action="/admin/productos" method="POST" class="grid sm:grid-cols-2 gap-4 text-xs">
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Código SKU *</label>
+                <input type="text" name="codigo" id="admCodigo" required placeholder="KRM-011" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Categoría *</label>
+                <select name="categoria" id="admCategoria" class="w-full rounded-xl border border-pink-200 px-3 py-2 bg-white">
+                    <option value="Rostro">Rostro</option>
+                    <option value="Labios">Labios</option>
+                    <option value="Ojos">Ojos</option>
+                    <option value="Cejas">Cejas</option>
+                    <option value="Skincare">Skincare</option>
+                    <option value="Kits Skin-First">Kits Skin-First</option>
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="font-bold text-gray-700 block mb-1">Nombre del producto *</label>
+                <input type="text" name="nombre" id="admNombre" required placeholder="Ej: Sérum Tinted Glow FPS 30" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="font-bold text-gray-700 block mb-1">Descripción corta *</label>
+                <input type="text" name="descripcionCorta" id="admDescCorta" required class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="font-bold text-gray-700 block mb-1">Ingredientes Skin-First (Validación RD02 no abrasivos) *</label>
+                <textarea name="descripcionIngredientes" id="admIngredientes" rows="2" required class="w-full rounded-xl border border-pink-200 px-3 py-2"></textarea>
+            </div>
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Precio COP *</label>
+                <input type="number" name="precio" id="admPrecio" required min="1000" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Stock disponible *</label>
+                <input type="number" name="stock" id="admStock" required min="0" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Gama de Tono</label>
+                <select name="gamaTono" id="admGamaTono" class="w-full rounded-xl border border-pink-200 px-3 py-2 bg-white">
+                    <option value="Universal">Universal</option>
+                    <option value="Frío">Frío</option>
+                    <option value="Neutro">Neutro</option>
+                    <option value="Cálido">Cálido</option>
+                </select>
+            </div>
+            <div>
+                <label class="font-bold text-gray-700 block mb-1">Tipo de Piel Principal</label>
+                <select name="tipoPiel" id="admTipoPiel" class="w-full rounded-xl border border-pink-200 px-3 py-2 bg-white">
+                    <option value="Todo tipo">Todo tipo</option>
+                    <option value="Seca">Seca</option>
+                    <option value="Mixta">Mixta</option>
+                    <option value="Grasa">Grasa</option>
+                    <option value="Sensible">Sensible</option>
+                </select>
+            </div>
+            <div class="sm:col-span-2">
+                <label class="font-bold text-gray-700 block mb-1">Paleta de Tonos (Nombre|#Hex|Subtono, separados por coma)</label>
+                <input type="text" name="paletaTonos" id="admPaleta" placeholder="01 Rosa|#F3D4C8|Frío, 02 Arena|#E3BE9F|Neutro" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div class="sm:col-span-2">
+                <label class="font-bold text-gray-700 block mb-1">URL de Imagen</label>
+                <input type="text" name="imagenUrl" id="admImagen" value="/images/product-showcase.jpg" class="w-full rounded-xl border border-pink-200 px-3 py-2">
+            </div>
+            <div class="sm:col-span-2 flex flex-wrap gap-4 items-center pt-1">
+                <label class="inline-flex items-center gap-2 font-bold text-emerald-700">
+                    <input type="checkbox" name="certificacionCrueltyFree" id="admCruelty" value="true" checked class="accent-pink-600">
+                    Certificación Cruelty-Free (RD02)
+                </label>
+                <label class="inline-flex items-center gap-2 font-bold text-kromaDark">
+                    <input type="checkbox" name="destacado" id="admDestacado" value="true" class="accent-pink-600">
+                    Producto Destacado
+                </label>
+            </div>
+            <div class="sm:col-span-2 flex justify-end gap-2 pt-2">
+                <button type="button" onclick="cerrarModalAdmin()" class="px-5 py-2.5 rounded-full border border-gray-200 font-bold text-gray-600">Cancelar</button>
+                <button type="submit" class="px-6 py-2.5 rounded-full kroma-btn-primary font-extrabold">Guardar Producto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalNuevoProducto() {
+    document.getElementById('modalAdminTitulo').textContent = 'Agregar Nuevo Producto';
+    const form = document.getElementById('formAdminProducto');
+    form.action = '/admin/productos';
+    form.reset();
+    document.getElementById('admImagen').value = '/images/product-showcase.jpg';
+    document.getElementById('admCruelty').checked = true;
+    const modal = document.getElementById('modalAdminProducto');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function abrirModalEditarProducto(btn) {
+    const d = btn.dataset;
+    document.getElementById('modalAdminTitulo').textContent = 'Editar Especificaciones de Producto';
+    const form = document.getElementById('formAdminProducto');
+    form.action = `/admin/productos/${d.id}/editar`;
+
+    document.getElementById('admCodigo').value = d.codigo || '';
+    document.getElementById('admCategoria').value = d.categoria || 'Rostro';
+    document.getElementById('admNombre').value = d.nombre || '';
+    document.getElementById('admDescCorta').value = d.desccorta || '';
+    document.getElementById('admIngredientes').value = d.ingredientes || '';
+    document.getElementById('admPrecio').value = d.precio || 0;
+    document.getElementById('admStock').value = d.stock || 0;
+    document.getElementById('admGamaTono').value = d.gama || 'Universal';
+    document.getElementById('admTipoPiel').value = d.tipopiel || 'Todo tipo';
+    document.getElementById('admImagen').value = d.imagen || '/images/product-showcase.jpg';
+    document.getElementById('admPaleta').value = d.paleta || '';
+    document.getElementById('admDestacado').checked = d.destacado === 'true';
+    document.getElementById('admCruelty').checked = true;
+
+    const modal = document.getElementById('modalAdminProducto');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function cerrarModalAdmin() {
+    const modal = document.getElementById('modalAdminProducto');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+
+async function actualizarEstadoPedido(id, estadoPedido) {
+    const resp = await fetch(`/admin/api/pedidos/${id}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estadoPedido })
+    });
+    const data = await resp.json();
+    if (data.ok) KromaStore.mostrarToast('📦 Estado de pedido actualizado');
+}
+
+async function actualizarEstadoGarantia(id, estadoSolicitud) {
+    const resp = await fetch(`/admin/api/garantias/${id}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ estadoSolicitud })
+    });
+    const data = await resp.json();
+    if (data.ok) KromaStore.mostrarToast('🎨 Estado de garantía actualizado');
+}
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${titulo})}"></head>
+<body class="bg-white text-kromaDark antialiased min-h-screen flex flex-col">
+
+<div th:replace="~{fragments/layout :: header}"></div>
+
+<main class="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+    <div th:if="${pedidoConfirmado != null}" class="max-w-2xl mx-auto bg-white border-2 border-emerald-200 rounded-3xl p-8 shadow-lg space-y-6">
+        <div class="text-center space-y-2">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-3xl mx-auto">✓</div>
+            <span class="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-bold">
+                Pago Aprobado • Comprobante <span th:text="${pedidoConfirmado.comprobantePago}"></span>
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-kromaDark">¡Gracias por tu compra en Kroma!</h1>
+            <p class="text-xs text-gray-500">Tu pedido <strong th:text="${pedidoConfirmado.numeroPedido}"></strong> está en preparación ecológica.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4 bg-pink-50/50 p-4 rounded-2xl border border-pink-100 text-xs">
+            <div>
+                <p class="font-bold text-gray-500 uppercase">Empaque Sostenible (RF07)</p>
+                <p class="font-extrabold text-emerald-700 mt-1" th:text="'🌱 ' + ${pedidoConfirmado.tipoEmpaqueSostenible}"></p>
+                <p class="text-gray-600 mt-1" th:text="'Supervisor: ' + ${pedidoConfirmado.supervisorEmpaque}"></p>
+            </div>
+            <div>
+                <p class="font-bold text-gray-500 uppercase">Guía Logística Nacional (RD03)</p>
+                <p class="font-extrabold text-kromaDark mt-1" th:text="'📦 ' + ${pedidoConfirmado.numeroGuia}"></p>
+                <p class="text-gray-600 mt-1" th:text="${pedidoConfirmado.direccionEntrega.ciudad} + ', ' + ${pedidoConfirmado.direccionEntrega.departamento}"></p>
+            </div>
+        </div>
+
+        <div class="space-y-2 border-t border-b border-pink-100 py-4 text-xs">
+            <div th:each="item : ${pedidoConfirmado.items}" class="flex items-center justify-between">
+                <span>
+                    <strong th:text="${item.cantidad} + 'x '"></strong>
+                    <span th:text="${item.nombreProducto}"></span>
+                    <span class="text-kromaPink" th:text="' (' + ${item.tonoSeleccionado} + ')'"></span>
+                </span>
+                <span class="font-bold" th:text="${currencyHelper.cop(item.subtotal)}"></span>
+            </div>
+            <div class="flex items-center justify-between text-gray-500 pt-2">
+                <span th:text="'Envío Nacional (' + ${pedidoConfirmado.metodoPago} + ')'"></span>
+                <span th:text="${pedidoConfirmado.costoEnvio == 0 ? 'GRATIS' : currencyHelper.cop(pedidoConfirmado.costoEnvio)}"></span>
+            </div>
+            <div class="flex items-center justify-between text-base font-extrabold text-kromaPink pt-1">
+                <span>Total Pagado</span>
+                <span th:text="${currencyHelper.cop(pedidoConfirmado.total)}"></span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 justify-center">
+            <a th:href="@{/mis-pedidos(correo=${pedidoConfirmado.datosCliente.correo})}" class="px-6 py-3 rounded-full kroma-btn-primary text-xs font-bold">Ver Mis Pedidos y Guía</a>
+            <a href="/" class="px-6 py-3 rounded-full border border-pink-200 text-xs font-bold text-kromaDark hover:border-kromaPink">Seguir Comprando</a>
+        </div>
+    </div>
+
+    <div th:if="${pedidoConfirmado == null}">
+        <div class="mb-8">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-kromaPink">Checkout Rápido Skin-First</span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-kromaDark mt-1">Finaliza tu pedido en 3 pasos</h1>
+        </div>
+
+        <div th:if="${error != null}" class="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-semibold" th:text="'⚠️ ' + ${error}"></div>
+
+        <div th:if="${#lists.isEmpty(itemsCarrito)}" class="text-center py-16 bg-pink-50/40 rounded-3xl border border-pink-100 space-y-4">
+            <p class="text-4xl">🛍️</p>
+            <h2 class="text-xl font-extrabold text-kromaDark">Aún no tienes productos en tu bolsa</h2>
+            <a href="/" class="inline-block px-6 py-3 rounded-full kroma-btn-primary text-xs font-bold">Ir al Catálogo</a>
+        </div>
+
+        <form th:if="${!#lists.isEmpty(itemsCarrito)}" action="/checkout" method="POST" class="grid lg:grid-cols-12 gap-8 items-start">
+            <div class="lg:col-span-7 space-y-6">
+                <div class="bg-white border border-pink-100 rounded-3xl p-6 space-y-4 shadow-sm">
+                    <h2 class="font-extrabold text-base text-kromaDark">1. Datos de contacto y envío nacional</h2>
+                    <div class="grid sm:grid-cols-2 gap-4 text-xs">
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Nombre completo *</label>
+                            <input type="text" name="nombre" required th:value="${usuarioActual != null ? usuarioActual.nombre : ''}" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Cédula de ciudadanía *</label>
+                            <input type="text" name="cedula" required placeholder="Ej: 1018456789" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Correo electrónico *</label>
+                            <input type="email" name="correo" required th:value="${usuarioActual != null ? usuarioActual.correo : ''}" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Teléfono / WhatsApp *</label>
+                            <input type="text" name="telefono" required placeholder="Ej: 3101234567" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="font-bold text-gray-600 block mb-1">Dirección de entrega *</label>
+                            <input type="text" name="direccion" required placeholder="Calle / Carrera / Apto" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Departamento *</label>
+                            <select id="selectDepto" name="departamento" onchange="actualizarEnvioCheckout()" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5 bg-white font-semibold">
+                                <option th:each="d : ${departamentos}" th:value="${d}" th:text="${d}"></option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="font-bold text-gray-600 block mb-1">Ciudad / Municipio *</label>
+                            <input type="text" name="ciudad" required value="Bogotá" class="w-full rounded-xl border border-pink-200 px-3.5 py-2.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-pink-100 rounded-3xl p-6 space-y-3 shadow-sm">
+                    <h2 class="font-extrabold text-base text-kromaDark">2. Elige tu empaque sostenible (RF07)</h2>
+                    <div class="grid sm:grid-cols-3 gap-3 text-xs">
+                        <label class="p-3.5 rounded-2xl border-2 border-pink-200 bg-pink-50/30 cursor-pointer">
+                            <input type="radio" name="tipoEmpaqueSostenible" value="Caja Biodegradable Bagazo de Caña" checked class="accent-pink-600 mb-2">
+                            <p class="font-extrabold text-kromaDark">Caja Bagazo de Caña</p>
+                            <p class="text-[11px] text-gray-500 mt-1">100% biodegradable y compostable.</p>
+                        </label>
+                        <label class="p-3.5 rounded-2xl border border-pink-200 cursor-pointer">
+                            <input type="radio" name="tipoEmpaqueSostenible" value="Bolsa Compostable Almidón de Maíz" class="accent-pink-600 mb-2">
+                            <p class="font-extrabold text-kromaDark">Bolsa Almidón de Maíz</p>
+                            <p class="text-[11px] text-gray-500 mt-1">Cero plásticos de un solo uso.</p>
+                        </label>
+                        <label class="p-3.5 rounded-2xl border border-pink-200 cursor-pointer">
+                            <input type="radio" name="tipoEmpaqueSostenible" value="Envase Reutilizable Eco-Return Kroma" class="accent-pink-600 mb-2">
+                            <p class="font-extrabold text-kromaDark">Eco-Return Reutilizable</p>
+                            <p class="text-[11px] text-gray-500 mt-1">Estuche retornable ecológico.</p>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-pink-100 rounded-3xl p-6 space-y-4 shadow-sm">
+                    <h2 class="font-extrabold text-base text-kromaDark">3. Pasarela de pago segura (PCI-DSS)</h2>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-bold">
+                        <label class="p-3 rounded-xl border border-pink-200 flex items-center gap-2 cursor-pointer"><input type="radio" name="metodoPago" value="Nequi" checked class="accent-pink-600"> Nequi</label>
+                        <label class="p-3 rounded-xl border border-pink-200 flex items-center gap-2 cursor-pointer"><input type="radio" name="metodoPago" value="PSE" class="accent-pink-600"> PSE</label>
+                        <label class="p-3 rounded-xl border border-pink-200 flex items-center gap-2 cursor-pointer"><input type="radio" name="metodoPago" value="Tarjeta Crédito/Débito" class="accent-pink-600"> Tarjeta</label>
+                        <label class="p-3 rounded-xl border border-pink-200 flex items-center gap-2 cursor-pointer"><input type="radio" name="metodoPago" value="Contraentrega" class="accent-pink-600"> Contraentrega</label>
+                    </div>
+                    <label class="flex items-start gap-2.5 p-3.5 rounded-2xl bg-pink-50/50 border border-pink-100 text-xs text-gray-700 cursor-pointer">
+                        <input type="checkbox" name="aceptoLey1480" value="true" required class="mt-0.5 accent-pink-600">
+                        <span>Acepto los términos del <strong>Estatuto del Consumidor Colombiano (Ley 1480 de 2011)</strong>, derecho de retracto y Garantía de Tono (7 días).</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 bg-pink-50/40 border border-pink-100 rounded-3xl p-6 space-y-4 sticky top-24">
+                <h2 class="font-extrabold text-lg text-kromaDark">Resumen de tu bolsa</h2>
+                <div class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                    <div th:each="item : ${itemsCarrito}" class="flex items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-pink-100 text-xs">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <img th:src="${item.imagenUrl}" alt="" class="w-12 h-12 rounded-xl object-contain bg-pink-50 shrink-0">
+                            <div class="min-w-0">
+                                <p class="font-bold text-kromaDark truncate" th:text="${item.nombreProducto}"></p>
+                                <p class="text-[11px] text-gray-500" th:text="${item.cantidad} + 'x • ' + ${item.tonoSeleccionado}"></p>
+                            </div>
+                        </div>
+                        <span class="font-extrabold text-kromaPink shrink-0" th:text="${currencyHelper.cop(item.subtotal)}"></span>
+                    </div>
+                </div>
+                <div class="border-t border-pink-200 pt-4 space-y-2 text-sm">
+                    <div class="flex justify-between text-gray-600"><span>Subtotal</span><span class="font-bold" th:text="${currencyHelper.cop(subtotal)}"></span></div>
+                    <div class="flex justify-between text-gray-600"><span>Envío Nacional</span><span id="checkoutCostoEnvio" class="font-bold" th:text="${costoEnvioInicial == 0 ? 'GRATIS' : currencyHelper.cop(costoEnvioInicial)}"></span></div>
+                    <div class="flex justify-between text-lg font-extrabold text-kromaDark pt-2 border-t border-pink-200">
+                        <span>Total a Pagar</span>
+                        <span id="checkoutTotal" class="text-kromaPink" th:text="${currencyHelper.cop(subtotal + costoEnvioInicial)}"></span>
+                    </div>
+                </div>
+                <button type="submit" class="w-full py-4 rounded-full kroma-btn-primary font-extrabold text-sm shadow-lg">Confirmar y Pagar Pedido →</button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+async function actualizarEnvioCheckout() {
+    const depto = document.getElementById('selectDepto')?.value;
+    if (!depto) return;
+    const resp = await fetch(`/api/envio/cotizar?departamento=${encodeURIComponent(depto)}`);
+    const data = await resp.json();
+    if (data.ok) {
+        document.getElementById('checkoutCostoEnvio').textContent = data.costoEnvio === 0 ? 'GRATIS' : KromaStore.formatearCOP(data.costoEnvio);
+        document.getElementById('checkoutTotal').textContent = KromaStore.formatearCOP(data.total);
+    }
+}
+</script>
+
+<div th:replace="~{fragments/layout :: footer}"></div>
+</body>
+</html>
